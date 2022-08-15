@@ -1,0 +1,143 @@
+#!/usr/bin/python
+
+import requests
+import json
+import sys
+import argparse
+
+opt_debug = False
+opt_unicode = False
+
+icons = {
+   "TRAIN": "🚆",
+   "IC": "🚆",
+   "ICD": "🚆",
+   "BUS": "🚌"
+}
+
+KEY = "8f8f0b6958594da3a8b89c2915054335"
+
+
+def ns_api(path):
+   response = requests.get(
+         "https://gateway.apiportal.ns.nl/" + path,
+         headers = {
+            "Authorization": "",
+            "Ocp-Apim-Subscription-Key": KEY,
+         })
+   rsp = json.loads(response.content.decode('utf-8'))
+   if opt_debug:
+      print(json.dumps(rsp, indent=3))
+   return rsp
+
+
+def list_stations():
+   rsp = ns_api("/reisinformatie-api/api/v2/stations")
+   for r in rsp["payload"]:
+      if r["land"] == "NL":
+         print("%-6.6s  %s" %( r["code"], r["namen"]["lang"]))
+   exit(0)
+
+
+def get(h, ks, dflt=None):
+   for k in ks:
+      if k in h:
+         return h[k]
+   return dflt
+
+
+def plan_trip(fromStation, toStation):
+
+   rsp = ns_api("/reisinformatie-api/api/v3/trips?fromStation=%s&toStation=%s" % (
+         fromStation, toStation))
+
+   for trip in rsp["trips"]:
+      duration = trip["actualDurationInMinutes"]
+   
+      print("┄┄┄┄┄┄┄┄┄┄┤")
+
+      for leg in trip["legs"]:
+         if leg["cancelled"]:
+            continue
+
+         sys.stdout.write("\x1b[1m")
+
+         p = leg["product"]
+         cat = p["shortCategoryName"]
+
+         if opt_unicode:
+            cat = get(icons, [cat], "?")
+         if cat == "TRAIN":
+            cat = "TR"
+
+         o = leg["origin"]
+         sys.stdout.write("%-3s " % cat)
+         sys.stdout.write("%5s ⬤ %-20.20s %4s" % (
+            get(o, ["actualDateTime", "plannedDateTime"], "")[11:16],
+            o["name"],
+            get(o, ["actualTrack"], "-")
+         ))
+         sys.stdout.write("\x1b[0m")
+         sys.stdout.write("\n")
+
+         msgs = get(leg, ["messages"], [])
+         for m in msgs:
+           print("          │ \x1b[31;1m%s\x1b[0m" %(m["text"]))
+         
+         if opt_stops:
+            for stop in leg["stops"]:
+
+               ta = get(stop, ["actualArrivalDateTime", "plannedArrivalDateTime"])
+               td = get(stop, ["actualDepartureDateTime", "plannedDepartureDateTime"])
+
+               if ta and td:
+                  print("    %5s │ %s" % (td[11:16], stop["name"]))
+         
+         d = leg["destination"]
+         sys.stdout.write("\x1b[1m")
+         sys.stdout.write("    %5s ⬤ %-20.20s %4s" % (
+            get(d, ["actualDateTime", "plannedDateTime"], "")[11:16],
+            d["name"],
+            get(d, ["actualTrack"], "-")
+         ))
+         sys.stdout.write("\x1b[0m")
+         print("")
+         
+         notes = get(leg, ["notes"])
+         if notes:
+            for n in notes:
+               if n["noteType"] != "TICKET":
+                  print("┄┄┄┄┄┄┄┄┄┄┤ \x1b[33;1m%s\x1b[0m" %(n["value"]))
+         else:
+            print("┄┄┄┄┄┄┄┄┄┄┤")
+      
+
+      print("")
+
+      return
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('fromStation', metavar='FROM', type=str, help="origin station")
+parser.add_argument('toStation', metavar='TO',   type=str, help="destination station")
+parser.add_argument('-a', metavar='TIME', type=str, help="arrival time")
+parser.add_argument('-d', metavar='TIME', type=str, help="departure time")
+parser.add_argument('-D', help="enable debugging", action=argparse.BooleanOptionalAction)
+parser.add_argument('-s', help="show all stops", action=argparse.BooleanOptionalAction)
+parser.add_argument('-u', help="use fancy unicode", action=argparse.BooleanOptionalAction)
+
+args = parser.parse_args()
+opt_debug = args.D
+opt_stops = args.s
+opt_unicode = args.u
+
+if opt_debug:
+   print(args)
+
+plan_trip(args.fromStation, args.toStation)
+
+
+#list_stations()
+#plan_trip("AMFS", "SHL")
+
+# vi: ts=3 sw=3
