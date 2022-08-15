@@ -17,44 +17,53 @@ optional arguments:
 
 
 ```
-$ ./ns vl rd
+$ ./ns rd vdl -s
 
-┄┄┄┄┄┄┄┄┄┄┤
-IC  09:54 ⬤ Nijmegen               1a
-    11:11 ⬤ Zwolle                 10
-┄┄┄┄┄┄┄┄┄┄┤
-IC  11:15 ⬤ Zwolle                  6
-    12:12 ⬤ Groningen              3b
-┄┄┄┄┄┄┄┄┄┄┤ Check-uit NS en check-in Arriva
-TR  12:22 ⬤ Groningen              2a
-    13:05 ⬤ Roodeschool             1
-┄┄┄┄┄┄┄┄┄┄┤
+TR  09:27 ○ Roodeschool                       1
+    09:31 │ Uithuizermeeden
+    09:35 │ Uithuizen
+    09:41 │ Usquert
+    09:46 │ Warffum
+    09:52 │ Baflo
+    09:56 │ Winsum
+    10:02 │ Sauwerd
+    10:08 │ Groningen Noord
+    10:13 ○ Groningen                        2a
 
-ico@mdoos:~/sandbox/prjs/ns(master)$ ./ns vl rd -s
-┄┄┄┄┄┄┄┄┄┄┤
-IC  09:54 ⬤ Nijmegen               1a
-    10:11 │ Arnhem Centraal
-    10:23 │ Dieren
-    10:33 │ Zutphen
-    10:46 │ Deventer
-    10:53 │ Olst
-    10:59 │ Wijhe
-    11:11 ⬤ Zwolle                 10
-┄┄┄┄┄┄┄┄┄┄┤
-IC  11:15 ⬤ Zwolle                  6
-    11:55 │ Assen
-    12:12 ⬤ Groningen              3b
-┄┄┄┄┄┄┄┄┄┄┤ Check-uit NS en check-in Arriva
-TR  12:22 ⬤ Groningen              2a
-    12:26 │ Groningen Noord
-    12:32 │ Sauwerd
-    12:37 │ Winsum
-    12:41 │ Baflo
-    12:47 │ Warffum
-    12:51 │ Usquert
-    12:56 │ Uithuizen
-    13:01 │ Uithuizermeeden
-    13:05 ⬤ Roodeschool             1
-┄┄┄┄┄┄┄┄┄┄┤
+IC  10:18 ○ Groningen                         7
+    10:34 │ Assen
+    11:15 ○ Zwolle                            5
 
+IC  11:20 ○ Zwolle                           10
+    11:29 │ Wijhe
+    11:36 │ Olst
+    11:45 │ Deventer
+    11:58 │ Zutphen
+    12:07 │ Dieren
+    12:23 │ Arnhem Centraal
+    12:36 ○ Nijmegen                         4b
+
+TR  13:08 ○ Nijmegen                         1b
+    13:11 │ Nijmegen Heyendaal
+    13:17 │ Mook-Molenhoek
+    13:23 │ Cuijk
+    13:31 │ Boxmeer
+    13:38 │ Vierlingsbeek
+    13:45 │ Venray
+    13:58 │ Blerick
+    14:03 │ Venlo
+    14:08 │ Tegelen
+    14:15 │ Reuver
+    14:20 │ Swalmen
+    14:25 ○ Roermond                         3b
+
+IC  14:30 ○ Roermond                          1
+    14:45 ○ Sittard                          3a
+
+IC  14:56 ○ Sittard                          20
+    15:11 ○ Heerlen                           5
+
+TR  15:23 ○ Heerlen                           1
+    15:26 │ Heerlen Woonboulevard
+    15:29 ○ Voerendaal                        2
 ```
