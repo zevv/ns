@@ -39,13 +39,6 @@ def list_stations():
    exit(0)
 
 
-def get(h, ks, dflt=None):
-   for k in ks:
-      if k in h:
-         return h[k]
-   return dflt
-
-
 def plan_trip(fromStation, toStation):
 
    rsp = ns_api("/reisinformatie-api/api/v3/trips?fromStation=%s&toStation=%s" % (
@@ -54,13 +47,11 @@ def plan_trip(fromStation, toStation):
    for trip in rsp["trips"]:
       duration = trip["actualDurationInMinutes"]
    
-      print("┄┄┄┄┄┄┄┄┄┄┤")
-
       for leg in trip["legs"]:
          if leg["cancelled"]:
             continue
 
-         sys.stdout.write("\x1b[1m")
+         sys.stdout.write("\x1b[37;1m")
 
          p = leg["product"]
          cat = p["shortCategoryName"]
@@ -72,44 +63,46 @@ def plan_trip(fromStation, toStation):
 
          o = leg["origin"]
          sys.stdout.write("%-3s " % cat)
-         sys.stdout.write("%5s ⬤ %-20.20s %4s" % (
-            get(o, ["actualDateTime", "plannedDateTime"], "")[11:16],
+         sys.stdout.write("%5s ○ %-30.30s %4s" % (
+            (o.get("actualDateTime") or o.get("plannedDateTime") or "")[11:16],
             o["name"],
-            get(o, ["actualTrack"], "-")
+            o.get("actualTrack") or "-"
          ))
          sys.stdout.write("\x1b[0m")
          sys.stdout.write("\n")
 
-         msgs = get(leg, ["messages"], [])
+         msgs = leg.get("messages") or []
          for m in msgs:
-           print("          │ \x1b[31;1m%s\x1b[0m" %(m["text"]))
+           print("            \x1b[31;1m%s\x1b[0m" %(m["text"]))
          
          if opt_stops:
+            sys.stdout.write("\x1b[37m")
             for stop in leg["stops"]:
-
-               ta = get(stop, ["actualArrivalDateTime", "plannedArrivalDateTime"])
-               td = get(stop, ["actualDepartureDateTime", "plannedDepartureDateTime"])
-
+               ta = stop.get("actualArrivalDateTime") or stop.get("plannedArrivalDateTime")
+               td = stop.get("actualDepartureDateTime") or stop.get("plannedDepartureDateTime")
                if ta and td:
                   print("    %5s │ %s" % (td[11:16], stop["name"]))
+            sys.stdout.write("\x1b[0m")
          
          d = leg["destination"]
-         sys.stdout.write("\x1b[1m")
-         sys.stdout.write("    %5s ⬤ %-20.20s %4s" % (
-            get(d, ["actualDateTime", "plannedDateTime"], "")[11:16],
+         sys.stdout.write("\x1b[37;1m")
+         sys.stdout.write("    %5s ○ %-30.30s %4s" % (
+            (d.get("actualDateTime") or d.get("plannedDateTime") or "")[11:16],
             d["name"],
-            get(d, ["actualTrack"], "-")
+            d.get("actualTrack") or "-"
          ))
          sys.stdout.write("\x1b[0m")
          print("")
          
-         notes = get(leg, ["notes"])
+         notes = leg.get("notes")
          if notes:
+            print("")
             for n in notes:
                if n["noteType"] != "TICKET":
-                  print("┄┄┄┄┄┄┄┄┄┄┤ \x1b[33;1m%s\x1b[0m" %(n["value"]))
+                  print("            \x1b[33;1m%s\x1b[0m" %(n["value"]))
+            print("")
          else:
-            print("┄┄┄┄┄┄┄┄┄┄┤")
+            print("")
       
 
       print("")
@@ -118,12 +111,13 @@ def plan_trip(fromStation, toStation):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('fromStation', metavar='FROM', type=str, help="origin station")
-parser.add_argument('toStation', metavar='TO',   type=str, help="destination station")
+parser.add_argument('fromStation', metavar='FROM', type=str, nargs='?', help="origin station")
+parser.add_argument('toStation', metavar='TO',   type=str, nargs='?', help="destination station")
 parser.add_argument('-a', metavar='TIME', type=str, help="arrival time")
 parser.add_argument('-d', metavar='TIME', type=str, help="departure time")
 parser.add_argument('-D', help="enable debugging", action=argparse.BooleanOptionalAction)
 parser.add_argument('-s', help="show all stops", action=argparse.BooleanOptionalAction)
+parser.add_argument('-l', help="list all dutch stations", action=argparse.BooleanOptionalAction)
 parser.add_argument('-u', help="use fancy unicode", action=argparse.BooleanOptionalAction)
 
 args = parser.parse_args()
@@ -134,7 +128,13 @@ opt_unicode = args.u
 if opt_debug:
    print(args)
 
-plan_trip(args.fromStation, args.toStation)
+if args.fromStation and args.toStation:
+   plan_trip(args.fromStation, args.toStation)
+elif args.l:
+   list_stations()
+else:
+   print(parser.format_help())
+   exit(1)
 
 
 #list_stations()
