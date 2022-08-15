@@ -4,6 +4,7 @@ import requests
 import json
 import sys
 import argparse
+import datetime
 
 opt_debug = False
 opt_unicode = False
@@ -41,11 +42,23 @@ def list_stations():
 
 def plan_trip(fromStation, toStation):
 
-   rsp = ns_api("/reisinformatie-api/api/v3/trips?fromStation=%s&toStation=%s" % (
-         fromStation, toStation))
+   dateTime = datetime.datetime.now(datetime.timezone.utc).isoformat()
+   rsp = ns_api("/reisinformatie-api/api/v3/trips?fromStation=%s&toStation=%s&dateTime=%s" % (
+         fromStation, toStation, dateTime))
 
    for trip in rsp["trips"]:
-      duration = trip["actualDurationInMinutes"]
+      duration = trip.get("actualDurationInMinutes") or trip.get("plannedDurationInMinutes") or 0
+      t1 = trip["legs"][ 0]["origin"].get("actualDateTime") or trip["legs"][ 0]["origin"].get("plannedDateTime") or ""
+      t2 = trip["legs"][-1]["origin"].get("actualDateTime") or trip["legs"][-1]["origin"].get("plannedDateTime") or ""
+
+      sys.stdout.write("\x1b[36;1m")
+      print("%s -> %s, %d x overstappen, reistijd: %dh %dm" % (
+         t1[11:16],
+         t2[11:16],
+         len(trip["legs"]) - 1,
+         (duration / 60),
+         (duration % 60)))
+      sys.stdout.write("\x1b[0m\n")
    
       for leg in trip["legs"]:
          if leg["cancelled"]:
@@ -73,7 +86,7 @@ def plan_trip(fromStation, toStation):
 
          msgs = leg.get("messages") or []
          for m in msgs:
-           print("            \x1b[31;1m%s\x1b[0m" %(m["text"]))
+           print("            \x1b[31;1m! %s\x1b[0m" %(m["text"]))
          
          if opt_stops:
             sys.stdout.write("\x1b[37m")
@@ -91,16 +104,13 @@ def plan_trip(fromStation, toStation):
             d["name"],
             d.get("actualTrack") or "-"
          ))
-         sys.stdout.write("\x1b[0m")
-         print("")
-         
+         sys.stdout.write("\x1b[0m\n")
+
          notes = leg.get("notes")
          if notes:
-            print("")
             for n in notes:
                if n["noteType"] != "TICKET":
-                  print("            \x1b[33;1m%s\x1b[0m" %(n["value"]))
-            print("")
+                  print("            \x1b[33;1m! %s\x1b[0m" %(n["value"]))
          else:
             print("")
       
